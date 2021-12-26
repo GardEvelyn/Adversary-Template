@@ -1,0 +1,688 @@
+﻿mse version: 2.0.0
+game: ADV
+short name: Adversary Flip
+full name: ADV Adversaries
+installer group: ADV/adversary
+icon: card-sample.png
+position hint: 003
+
+version: 2018-02-09
+depends on:
+	package: ADV.mse-game
+	version: 2014-06-25
+depends on:
+	package: ADV-watermarks.mse-include
+	version: 2007-09-23
+depends on:
+	package: ADV-mana-large.mse-symbol-font
+	version: 2007-09-23
+depends on:
+	package: ADV-mana-small.mse-symbol-font
+	version: 2007-09-23
+depends on:
+	package: ADV-identity-new.mse-include
+	version: 2012-01-22
+
+card width: 752
+card height: 523
+card dpi: 150
+############################################################## Extra scripts
+init script:
+	# Should hybrids have a grey name?
+	mask_hybrid_with_land := { styling.grey_hybrid_name }
+	
+	template_prefix := [card: "" card2: "" stamp: "" identity: "/ADV-identity-new.mse-include/"]
+	template_suffix := [card: "card.png" card2: "card2.png" stamp: "stamp.jpg" identity: "identity.png"]
+	template      := { template_prefix[type] + input + template_suffix[type] }
+	land_template := { template_prefix[type] + "c" + template_suffix[type] }
+	# Use land templates for previews because they show more contrast
+	hybrid_previews := "land,hybrid"
+
+	# This will create two seperate card faces
+	card_background2 := { color_background(type:"card2", base_hybrid:card_hybrid) }
+	
+	# Use the normal tap symbol
+	mana_t := {
+		if      styling.tap_symbol == "old"        then "old"
+		else if styling.tap_symbol == "diagonal T" then "older"
+		else                                            "new"
+	}
+	
+	# Use guild mana symbols?
+	guild_mana := { styling.use_guild_mana_symbols }	
+	
+	paintbrush_color := {
+		if to_int(card.border_color) < 96 then "white" else "black"
+	}
+	
+	# Loyalty cost arrows
+	loyalty_image := {
+		if      contains(input, match: "+") then "loyalty up"
+		else if contains(input, match: "-") then "loyalty down"
+		else                                     "loyalty naught"
+	}
+	
+	card_shape := {"planeswalker"}
+	
+	# Is the card a promo card?
+	is_promo := { styling.promo }
+	
+	paragraph_count := 
+		replace@(match:"<soft-line>\n", replace:"")+
+		filter_text@(match:"\n")
+	is_unsorted := {styling.remove_from_autocount}
+	shrink_name := {if styling.shrink_name_text != "" then to_int((if comma_count(styling.shrink_name_text) == "" then styling.shrink_name_text else split_text(match:",", styling.shrink_name_text).0)) else 0 }
+	shrink_name2 := {if styling.shrink_name_text != "" then to_int((if comma_count(styling.shrink_name_text) != "" then split_text(match:",", styling.shrink_name_text).1)) else 0 }	
+############################################################## Set info fields
+set info style:
+	symbol:
+		variation:
+			name: invertedcommon
+			border radius: 0.10
+			fill type: solid
+			fill color:   rgb(255,255,255)
+			border color: rgb(0,0,0)
+############################################################## Extra style options
+styling field:
+	type: text
+	name: chop top
+	description: Shrinks the textbox from the top.
+styling field:
+	type: text
+	name: chop bottom
+	description: Shrinks the textbox from the bottom.
+styling field:
+	type: text
+	name: chop top 2
+	description: Shrinks the textbox from the top.
+styling field:
+	type: text
+	name: chop bottom 2
+	description: Shrinks the textbox from the bottom.
+styling field:
+	type: text
+	name: shrink name text
+	description: Format as "X,Y". Shrinks main name X pixels and adventure name Y pixels.
+styling field:
+	type: boolean
+	name: use holofoil stamps
+	description: Change to no to disable rare holofoil stamps
+styling field:
+	type: boolean
+	name: remove from autocount
+	description: Removes the automatic card number for specific cards, to allow for overcounted cards like in Planeswalker Decks.
+	initial: no
+styling field:
+	type: boolean
+	name: grey hybrid name
+	description: Use a grey background for the name and type line on hybrid cards. This is done on real cards.
+styling field:
+	type: boolean
+	name: use guild mana symbols
+	description: Use the Ravnica guild symbols instead of the official half/half circles for hybrid mana.
+	initial: no
+styling field:
+	type: package choice
+	name: text box mana symbols
+	match: ADV-mana-*.mse-symbol-font
+	initial: ADV-mana-small.mse-symbol-font
+styling field:
+	type: choice
+	name: tap symbol
+	description: What tap and untap symbols should be used on cards?
+	initial: modern
+	choice: modern
+	choice: old
+	choice: diagonal T
+styling field:
+	type: choice
+	name: center text
+	description: When to center text (short text only means only on one-line cards with no flavor text)
+	choice: always
+	choice: short text only
+	choice: never
+	initial: never
+styling field:
+	type: boolean
+	name: promo
+	description: Is this card a promo card, with the "P" rarity?
+	initial: no
+styling field:
+	type: boolean
+	name: inverted common symbol
+	description: Should the common rarity symbol be inverted, like in Coldsnap?
+	initial: no
+styling field:
+	type: package choice
+	name: overlay
+	description: Should there be an overlay applied, such as foil?
+	match: ADV-overlay-*.mse-include
+	required: false
+styling style:
+	use guild mana symbols:
+		choice images:
+			yes: /ADV-mana-small.mse-symbol-font/mana_guild_rg.png
+			no:  /ADV-mana-small.mse-symbol-font/mana_rg.png
+	tap symbol:
+		render style: both
+		choice images:
+			modern:     /ADV-mana-large.mse-symbol-font/mana_t.png
+			old:        /ADV-mana-large.mse-symbol-font/mana_t_old.png
+			diagonal T: /ADV-mana-large.mse-symbol-font/mana_t_older.png
+	center text:
+		render style: both
+		choice images:
+			always:          /ADV.mse-game/icons/center-all-text.png
+			short text only: /ADV.mse-game/icons/center-short-text.png
+			never:           /ADV.mse-game/icons/center-no-text.png
+	inverted common symbol:
+		choice images:
+			no:  { symbol_variation(symbol: set.symbol, variation: "common") }
+			yes: { symbol_variation(symbol: set.symbol, variation: "invertedcommon") }
+############################################################## Card fields
+card style:
+	############################# Background stuff
+	border color:
+		left: 0
+		top : 0
+		width:	752
+		height:	523
+		radius: 18
+		left width:   17
+		right width:  17
+		top width:    17
+		bottom width: 18
+		z index: 4
+		mask: border_mask.png
+	card color:
+		left:	0
+		top:	0
+		width:	375
+		height:	523
+		z index: 0
+		render style: image
+		popup style: in place
+		image: { card_background() }
+	card color 2:
+		left: 377
+		top: 0
+		width:	375
+		height:	523
+		z index: 0
+		render style: image
+		popup style: in place
+		image: { card_background2() }
+	############################# Name line
+	name:
+		left: 57
+		top: 21
+		right: 318
+		height: 23
+		alignment: bottom shrink-overflow
+		padding bottom: 0
+		z index: 1
+		font:
+			name: Beleren Bold
+			size: 16
+			color: black
+	name 2:
+		left: 435
+		top: 21
+		right: 696
+		height: 23
+		alignment: bottom shrink-overflow
+		padding bottom: 0
+		z index: 1
+		font:
+			name: Beleren Bold
+			size: 16
+			color: white
+	casting cost:
+		right: 345
+		top: 298
+		width: 150
+		height: 21
+		alignment: middle right
+		symbol font:
+			name: ADV-mana-large
+			size: 15
+			alignment: middle right
+		always symbol: true
+		z index: 2
+		padding top: 0
+	casting cost 2:
+		right: 722
+		top: 298
+		width: 150
+		height: 23
+		alignment: middle right
+		symbol font:
+			name: ADV-mana-large
+			size: 15
+			alignment: middle right
+		always symbol: true
+		z index: 2
+		padding top: 0
+	transformation:
+		left: 21
+		top: 18
+		height: 32
+		width: 32
+		render style: image
+		choice images:
+			day: sun_circle.png
+			night: night_circle.png
+			moon: moon.png
+			eldrazi: eldrazi.png
+	transformation 2:
+		left: 397
+		top: 18
+		height: 32
+		width: 32
+		render style: image
+		choice images:
+			day: sun_circle.png
+			night: night_circle.png
+			moon: moon.png
+			eldrazi: eldrazi.png
+	rating:
+		right: 347
+		top: 21
+		height: 24
+		width: 24
+		z index: 1
+		render style: image
+		choice images:
+			one: one.png
+			two: two.png
+			three: three.png
+			four: four.png
+			five: five.png
+			six: six.png
+	rating 2:
+		right: 724
+		top: 21
+		height: 24
+		width: 24
+		z index: 1
+		render style: image
+		choice images:
+			one: one.png
+			two: two.png
+			three: three.png
+			four: four.png
+			five: five.png
+			six: six.png
+	############################# Image
+	image:
+		left: 25
+		top: 50
+		width: 325
+		height:	241
+		z index: 1
+		mask: imagemask.png
+	image 2:
+		left: 402
+		top: 50
+		width: 325
+		height:	241
+		z index: 1
+		mask: imagemask.png
+	############################# Card type
+	type:
+		left: 32
+		top: 296
+		width: 80
+		height: 20
+		alignment: top shrink-overflow
+		z index: 1
+		padding top: 2
+		font:
+			name: Beleren Bold
+			size: 13
+			color: black
+			separator color: red
+	type 2:
+		left: 411
+		top: 296
+		width: 80
+		height: 20
+		alignment: top shrink-overflow
+		z index: 2
+		padding top: 2
+		font:
+			name: Beleren Bold
+			size: 13
+			color: white
+			separator color: red
+	############################# Text box
+	text:
+		left: 30
+		top: 329
+		width: 318
+		height: 144
+		font:
+			name: MPlantin
+			italic name: MPlantin-Italic
+			size: 14
+			scale down to: 6
+			color: black
+		symbol font:
+			name: { styling.text_box_mana_symbols }
+			size: 14
+		alignment:"middle left"
+		z index: 6
+		padding left:   6
+		padding right:  4
+		padding bottom: 2
+		line height hard: 1.2
+		line height line: 1.5
+		line height soft: 0.9
+		line height hard max: 1.3
+		line height line max: 1.6
+		mask: text_mask.png
+	text 2:
+		left: 408
+		top: 329
+		width: 318
+		height: 144
+		font:
+			name: MPlantin
+			italic name: MPlantin-Italic
+			size: 14
+			scale down to: 6
+			color: black
+		symbol font:
+			name: { styling.text_box_mana_symbols }
+			size: 14
+		alignment:"middle left"
+		z index: 6
+		padding left:   6
+		padding right:  4
+		padding bottom: 2
+		line height hard: 1.2
+		line height line: 1.5
+		line height soft: 0.9
+		line height hard max: 1.3
+		line height line max: 1.6
+		mask: text_mask.png
+	watermark:
+		left: 19
+		top : 331
+		width: 334
+		height: 150
+		z index: 4
+		render style: image
+		alignment: middle center
+		include file: /ADV-watermarks.mse-include/watermarks
+	watermark 2:
+		left: 395
+		top: 331
+		width: 334
+		height: 150
+		z index: 4
+		render style: image
+		popup style: in place
+		alignment: middle center
+		include file: /ADV-watermarks.mse-include/watermarks
+	hand:
+		z index: 7
+		left: 326
+		top: 464
+		width: 13.16
+		height:	34.63
+		alignment: center middle
+		font:
+			name: Beleren Bold
+			size: 20
+			color: black
+	hand 2:
+		z index: 7
+		left: 703
+		top: 464
+		width: 13.16
+		height:	34.63
+		alignment: center middle
+		font:
+			name: Beleren Bold
+			size: 20
+			color: black
+	life:
+		z index: 7
+		left: 33
+		top: 464
+		width: 13.16
+		height:	34.63
+		alignment: center middle
+		font:
+			name: Beleren Bold
+			size: 20
+			color: black
+	life 2:
+		z index: 7
+		left: 410
+		top: 464
+		width: 13.16
+		height:	34.63
+		alignment: center middle
+		font:
+			name: Beleren Bold
+			size: 20
+			color: black
+	############################# Card sorting / numbering
+
+	############################# Copyright stuff
+	illustrator:
+		left: 66
+		top: 497.5
+		width: 200
+		height: 10
+		z index: 1
+		font:
+			name: Beleren Small Caps Bold
+			size: 7.25
+			color: white
+	illustrator 2:
+		left: 443
+		top: 497.5
+		width: 200
+		height: 10
+		z index: 1
+		font:
+			name: Beleren Small Caps Bold
+			size: 7.25
+			color: white
+############################################################## Extra card fields
+extra card field:
+	type: text
+	name: card code
+	save value: false
+extra card field:
+	type: choice
+	name: artist arrow
+	editable: false
+	save value: false
+	choice: white
+extra card field:
+	type: choice
+	name: artist arrow 2
+	editable: false
+	save value: false
+	choice: white
+extra card field:
+	type: choice
+	name: hand
+	editable: false
+	choice: loyalty
+	save value: false
+extra card field:
+	type: choice
+	name: hand 2
+	editable: false
+	choice: loyalty
+	save value: false
+extra card field:
+	type: choice
+	name: life
+	editable: false
+	choice: loyalty
+	save value: false
+extra card field:
+	type: choice
+	name: life 2
+	editable: false
+	choice: loyalty
+	save value: false
+extra card field:
+	type: choice
+	name: stamp
+	script: card.card_color
+	editable: false
+	save value: false
+extra card field:
+	type: choice
+	name: foil stamp
+	choice: stamp
+	save value: false
+	editable: false
+extra card field:
+	type: choice
+	name: foil layer
+	choice: foil
+	save value: false
+	editable: false
+extra card field:
+	type: text
+	name: colon 1
+	editable: false
+	script: ":"
+	save value: false
+extra card field:
+	type: text
+	name: colon 2
+	editable: false
+	script: ":"
+	save value: false
+extra card field:
+	type: text
+	name: colon 3
+	editable: false
+	script: ":"
+	save value: false
+extra card field:
+	type: text
+	name: colon 4
+	editable: false
+	script: ":"
+	save value: false
+extra card field:
+	type: text
+	name: second text
+	editable: false
+	multi line: true
+	save value: false
+	script: card.text
+extra card field:
+	type: text
+	name: auto copyright
+	script: set.copyright
+	save value: false
+	editable: false
+	show statistics: false
+extra card style:
+	artist arrow:
+		left: 50
+		top: 500
+		width: 12
+		height: 7
+		z index: 2
+		render style: image
+		image: artist_arrow.png
+	artist arrow 2:
+		left: 427
+		top: 500
+		width: 12
+		height: 7
+		z index: 2
+		render style: image
+		image: artist_arrow.png
+	hand:
+		right: 362
+		top: 452
+		width: 60
+		height: 60
+		z index: 6
+		render style: image
+		visible: { card.hand !="" }
+		choice images:
+			loyalty: hand.png
+	hand 2:
+		right: 739
+		top: 452
+		width: 60
+		height: 60
+		z index: 6
+		render style: image
+		visible: { card.hand_2 !="" }
+		choice images:
+			loyalty: hand.png
+	life:
+		right: 70
+		top: 452
+		width: 60
+		height: 60
+		z index: 6
+		render style: image
+		visible: { card.life !="" }
+		choice images:
+			loyalty: life.png
+	life 2:
+		right: 447
+		top: 452
+		width: 60
+		height: 60
+		z index: 6
+		render style: image
+		visible: { card.life_2 !="" }
+		choice images:
+			loyalty: life.png
+	stamp:
+		left: 170
+		top: 473
+		width: 36.5
+		height: 22.5
+		z index: 6
+		visible: { is_rare() and styling.use_holofoil_stamps }
+		render style: image
+		image: { card_stamp() }
+		mask: stamp_mask.png
+	foil stamp:
+		left: 170
+		top: 473
+		width: 36.5
+		height: 22.5
+		z index: 7
+		visible: { is_rare() and styling.use_holofoil_stamps }
+		render style: image
+		image: foil_stamp.png
+	foil layer:
+		left: 0
+		top : 0
+		width: 375
+		height: 523
+		z index: 4
+		render style: image
+		image: {if styling.overlay == "" then nil else styling.overlay + "/overlay.png"}
+	auto copyright:
+		right: 350
+		top: 498
+		width: 140
+		height: 10
+		z index: 2
+		alignment: middle right shrink-overflow
+		visible: {set.automatic_copyright}
+		font:
+			name: Matrix
+			size: 7
+			color: white
+			weight: bold
